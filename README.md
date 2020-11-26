@@ -1,6 +1,7 @@
 # TSQL
 
 Just some T SQL (Microsoft SQL Server) script I've made/used over the years.
+Mostly things I've searched for on different websites by never found good anwsers to so I had to create them myself.
 
 ## CreateAuditTriggers
 This script creats a StoredProcedure that will, when run, create an audit-table if one doesn't exist, and then put triggers on a table of choice.  

@@ -17,3 +17,22 @@ After creating the stored procedure is executed by running:
 ## FullTableHash
 Small script that creates a hash for the full table without having to specify each column.  
 Fairly fast (and you can change the SHA2_512 to whichever hashbytes you need.  
+
+## findString
+Creates a StoredProcedure that searches the whole server for a string.  
+It searches for the string being contained in :
+* tablen ames
+* column names
+* viewn ames
+* view column names
+* view code
+* stored procedure names
+* stored procedure code
+* job names
+* job step names
+* job "to execute"
+  
+can not search SSIS packages.
+
+execute with:  
+> exec dbo.findString 'string to find'

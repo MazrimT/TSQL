@@ -39,3 +39,6 @@ can not search SSIS packages.
 
 execute with:  
 > exec dbo.findString 'string to find'
+
+## ActiveQueries
+Lists currently running queries and gives some good info about them.

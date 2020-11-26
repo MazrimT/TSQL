@@ -12,3 +12,7 @@ After creating the stored procedure is executed by running:
 > exec dbo.CreateAuditTriggers @SchemaName = [schemaname], @TableName = [tablename], @PrimaryKey = [name of the primarykey column]  
   
 @PrimaryKey can be omitted, the StoredProcedure will then try to find it, if there's no primary key on the table it will use the ordinally first column in the table.
+  
+## FullTableHash
+Small script that creates a hash for the full table without having to specify each column.  
+Fairly fast (and you can change the SHA2_512 to whichever hashbytes you need.  

@@ -21,16 +21,19 @@ Fairly fast (and you can change the SHA2_512 to whichever hashbytes you need.
 ## findString
 Creates a StoredProcedure that searches the whole server for a string.  
 It searches for the string being contained in :
-* tablen ames
+* tablen names
 * column names
-* viewn ames
+* viewn names
 * view column names
 * view code
 * stored procedure names
 * stored procedure code
+* function names
+* function code
 * job names
+* job descriptions
 * job step names
-* job "to execute"
+* job commands
   
 can not search SSIS packages.
 

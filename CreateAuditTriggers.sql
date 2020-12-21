@@ -6,14 +6,17 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-Create procedure [dbo].[CreateAuditTriggers]
-	 @SchemaName varchar(100)					/* mandatory */
+create procedure dbo.[CreateAuditTriggers]
+	 @DatabaseName varchar(100)					/* mandatory */
+	,@SchemaName varchar(100)					/* mandatory */
 	,@TableName varchar(255)					/* mandatory */
 	,@PrimaryKey varchar(255)	= 'unknown'		/* if primary key is not supplied try to find it below */
 as 
 begin
 
-	declare @sql nvarchar(max)					/* make the variable to put dynamic sql into */
+	declare @sql nvarchar(max)														/* make the variable to put dynamic sql into */
+	declare @exec nvarchar(max) = quotename(@DatabaseName) + N'.sys.sp_executesql' /* special execute command so we can run this on any database */
+
 
 	/************************************************************************************
 
@@ -21,22 +24,24 @@ begin
 
 	************************************************************************************/
 
-	if not exists (select * from INFORMATION_SCHEMA.SCHEMATA where SCHEMA_NAME = 'audit')
+	set @sql = '
+	if not exists (select * from INFORMATION_SCHEMA.SCHEMATA where SCHEMA_NAME = ''audit'')
 	begin
-		set @sql = 'CREATE SCHEMA audit AUTHORIZATION dbo;'
-		exec(@sql)
+		exec (''CREATE SCHEMA [audit] AUTHORIZATION [dbo]'')
 	end
+	'
+
+	exec @exec @sql
 
 	/************************************************************************************
 
 		check that the audit table exists, if not create it.
 
 	************************************************************************************/
-	 
-	if not exists (select * from INFORMATION_SCHEMA.TABLES where TABLE_SCHEMA = 'audit' and TABLE_NAME = 'audit')
+	set @sql = '
+	if not exists (select * from INFORMATION_SCHEMA.TABLES where TABLE_SCHEMA = ''audit'' and TABLE_NAME = ''audit'')
 	begin
-		set @sql = '
-			create table audit.audit (
+		create table audit.audit (
 					 AuditId		bigint identity(1,1) PRIMARY KEY
 					,AuditAction	varchar(10)
 					,AuditGroupId	UNIQUEIDENTIFIER
@@ -50,9 +55,10 @@ begin
 					,NewValue		nvarchar(max)
 					,Username		varchar(255)
 				);
-			'
-		exec(@sql)
-	end 
+	end
+	'
+	exec @exec @sql
+ 
 
 	/************************************************************************************************************************************************
 
@@ -63,28 +69,35 @@ begin
 
 	if @PrimaryKey = 'unknown'
 	begin
+		set @sql = '	
+			set @pk = isnull(
+				(
+					select 
+						ccu.COLUMN_NAME
+					from INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
+					join INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE ccu
+						on ccu.CONSTRAINT_NAME = tc.CONSTRAINT_NAME
+					where tc.CONSTRAINT_TYPE = ''PRIMARY KEY''
+					and tc.CONSTRAINT_SCHEMA = '''+@SchemaName+'''
+					and tc.TABLE_NAME = '''+@TableName+'''
+				),
+				(
+					select 
+						c.COLUMN_NAME 
+					from INFORMATION_SCHEMA.COLUMNS c
+					where c.TABLE_SCHEMA = '''+@SchemaName+'''
+					and c.TABLE_NAME = '''+@TableName+'''
+					and c.ORDINAL_POSITION = 1
+				)
+			)
+		'
 
-		set @PrimaryKey = isnull(
-							(
-								select 
-									ccu.COLUMN_NAME
-								from INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
-								join INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE ccu
-									on ccu.CONSTRAINT_NAME = tc.CONSTRAINT_NAME
-								where tc.CONSTRAINT_TYPE = 'PRIMARY KEY'
-								and tc.CONSTRAINT_SCHEMA = @SchemaName
-								and tc.TABLE_NAME = @TableName
-							),
-							(
-								select 
-									c.COLUMN_NAME 
-								from INFORMATION_SCHEMA.COLUMNS c
-								where c.TABLE_SCHEMA = @SchemaName
-								and c.TABLE_NAME = @TableName
-								and c.ORDINAL_POSITION = 1
-							)
-						)
-	end 
+		exec @exec @sql, N'@pk nvarchar(255) OUTPUT', @pk=@PrimaryKey OUTPUT
+	end
+
+	
+	
+	
 
 	/************************************************************************************
 
@@ -101,7 +114,7 @@ begin
 
 	************************************************************************************/
 
-	set @sql = N'create trigger '+@SchemaName+'.'+@TableName+'_update		
+	set @sql = N'create trigger '+@SchemaName+'.'+@TableName+'_audit_update		
 				on '+@SchemaName+'.'+@TableName+'
 				after UPDATE
 				as begin
@@ -168,7 +181,7 @@ begin
 				end
 		'
 
-	exec (@sql)
+	exec @exec @sql
 
 	/************************************************************************************
 
@@ -176,7 +189,7 @@ begin
 
 	************************************************************************************/
 
-	set @sql = N'create trigger '+@SchemaName+'.'+@TableName+'_insert
+	set @sql = N'create trigger '+@SchemaName+'.'+@TableName+'_audit_insert
 				on '+@SchemaName+'.'+@TableName+'
 				after INSERT
 				as begin
@@ -234,7 +247,7 @@ begin
 				end
 		'
 
-	exec (@sql)
+	exec @exec @sql
 
 
 
@@ -244,7 +257,7 @@ begin
 
 	************************************************************************************/
 
-	set @sql = N'create trigger '+@SchemaName+'.'+@TableName+'_delete
+	set @sql = N'create trigger '+@SchemaName+'.'+@TableName+'_audit_delete
 				on '+@SchemaName+'.'+@TableName+'
 				after DELETE
 				as begin
@@ -302,7 +315,7 @@ begin
 				end
 		'
 
-	exec (@sql)
+	exec @exec @sql
 
 
 

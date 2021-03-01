@@ -94,3 +94,6 @@ assumes access to copy of users and groups from an active directory and creates 
 
 ## TableWithAutoNumber
 How to create a table that has a "number" with a prefix that counts up automatically
+
+## discUsage
+Creates a stored procedure that when run will look through all databases and record metadata about tables such as discusage, index usage, last queried, last updated.

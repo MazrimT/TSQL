@@ -97,3 +97,6 @@ How to create a table that has a "number" with a prefix that counts up automatic
 
 ## discUsage
 Creates a stored procedure that when run will look through all databases and record metadata about tables such as discusage, index usage, last queried, last updated.
+
+## DatabaseRolesAndAccess
+Creates a stored procedure that when run will look through all databases and record who has access to them. since some of these are group access it also checks who is in what group.
